@@ -14,39 +14,30 @@ using std::vector;
 FusionEKF::FusionEKF() {
   is_initialized_ = false;
 
-  previous_timestamp_ = 0;
-
-  // initializing matrices
-  ekf_.R_kf_  = MatrixXd(2, 2);
-  ekf_.R_ekf_ = MatrixXd(3, 3);
-  ekf_.H_kf_  = MatrixXd(2, 4);
-//  Hj_ = MatrixXd(3, 4);
-
   //measurement covariance matrix - laser
+  ekf_.R_kf_  = MatrixXd(2, 2);
   ekf_.R_kf_ << 0.0225, 0,
-        0, 0.0225;
+                0, 0.0225;
 
   //measurement covariance matrix - radar
+  ekf_.R_ekf_ = MatrixXd(3, 3);
   ekf_.R_ekf_ << 0.09, 0, 0,
-        0, 0.0009, 0,
-        0, 0, 0.09;
+                 0, 0.0009, 0,
+                 0, 0, 0.09;
 
-  /**
-    * Finish initializing the FusionEKF.
-    * Set the process and measurement noises
-  */
   //state covariance matrix P
   ekf_.P_ = MatrixXd(4, 4);
   ekf_.P_ <<  1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1000, 0,
-        0, 0, 0, 1000;
+              0, 1, 0, 0,
+              0, 0, 1000, 0,
+              0, 0, 0, 1000;
 
-  //measurement matrix
+  //measurement matrix for laser
+  ekf_.H_kf_  = MatrixXd(2, 4);
   ekf_.H_kf_ << 1, 0, 0, 0,
-              0, 1, 0, 0;
+                0, 1, 0, 0;
 
-  //the initial transition matrix F_
+  //the initial transition matrix F
   ekf_.F_ = MatrixXd(4, 4);
   ekf_.F_ << 1, 0, 1, 0,
              0, 1, 0, 1,
@@ -80,19 +71,25 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       Convert radar from polar to cartesian coordinates and initialize state.
       */
       // order in measurements: rho, phi, rho_dot
+      // I used only position information from radar at initialization
+      // since using velocity information is a bit tricky.
       double rho = measurement_pack.raw_measurements_ [0];
       double tg_phi = tan (measurement_pack.raw_measurements_ [1]);
-      double x = rho / std::sqrt (tg_phi*tg_phi + 1) / tg_phi;
-      double y = rho / std::sqrt (tg_phi*tg_phi + 1);
+      double sq = std::sqrt (tg_phi*tg_phi + 1);
+      double x = rho / sq;
+      double y = rho * tg_phi / sq;
       ekf_.x_ << x, y, 0, 0;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
       Initialize state.
       */
-      ekf_.x_ << measurement_pack.raw_measurements_ [0], measurement_pack.raw_measurements_ [1], 0, 0;
+      ekf_.x_ << measurement_pack.raw_measurements_ [0],
+                 measurement_pack.raw_measurements_ [1],
+                 0, 0;
     }
 
+    // initializing timestamp
     previous_timestamp_ = measurement_pack.timestamp_;
 
     // done initializing, no need to predict or update
