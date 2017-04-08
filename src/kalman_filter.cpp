@@ -32,6 +32,16 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   */
   Eigen::MatrixXd H_ekf;
   Eigen::VectorXd y;
+
+  // if we at (0, 0) cartesian coordinates
+  // we have trouble with jacobian calculation
+  // since we cannot determine angle and rho derivative.
+  // So I decided to choise manually measurement vector as (0, 0, 0)
+  // and jacoblan as
+  // 1 0 0 0
+  // 0 1 0 0
+  // 0 0 1 1
+  // to use some information from that state
   if ((x_(0)*x_(0) + x_(1)*x_(1)) == 0) {
     H_ekf.setIdentity (3, 4);
     H_ekf (2, 3) = 1;
