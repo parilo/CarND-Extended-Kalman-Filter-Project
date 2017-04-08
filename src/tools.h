@@ -25,6 +25,13 @@ public:
   */
   Eigen::MatrixXd CalculateJacobian(const Eigen::VectorXd& x_state);
 
+  /**
+   * @brief Convert cartesian measurement into radar coordinates
+   * @param x_state - measurement in radar coordinates
+   * @return vector in radar coordinates
+   */
+  Eigen::VectorXd CalculateRadarMeasurement (const Eigen::VectorXd& x_state);
+
 };
 
 #endif /* TOOLS_H_ */

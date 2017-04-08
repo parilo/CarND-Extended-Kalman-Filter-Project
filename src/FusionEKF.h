@@ -36,7 +36,10 @@ private:
   bool is_initialized_;
 
   // previous timestamp
-  long previous_timestamp_;
+  long long previous_timestamp_;
+
+  float noise_ax = 9;
+  float noise_ay = 9;
 
   // tool object used to compute Jacobian and RMSE
   Tools tools;
